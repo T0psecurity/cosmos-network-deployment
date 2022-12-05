@@ -161,7 +161,8 @@
   git:
     repo: "{{chain_repository}}"
     dest: "{{chain_repo_dir}}"
-    version: "{{chain_version}}"
+    version: master
+    update: yes
     force: yes
   become_user: "{{node_user}}"
 
@@ -233,7 +234,7 @@
 - name: Check cosmovisor version
   shell: |
     PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-    cosmovisor --version
+    cosmovisor version
   become_user: "{{node_user}}"
   register: cosmovisor_current
   ignore_errors: true

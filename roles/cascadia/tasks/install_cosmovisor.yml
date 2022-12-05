@@ -2,7 +2,7 @@
 - name: Check cosmovisor version
   shell: |
     PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-    cosmovisor --version
+    cosmovisor version
   become_user: "{{gaiad_user}}"
   register: cosmovisor_current
   ignore_errors: true

@@ -9,9 +9,9 @@
   import_tasks: faucet.yml
   when: faucet_enabled | default(false) | bool
 
-- name: join
-  import_tasks: join.yml
-  when: genesis_file is defined or genesis_url is defined
+# - name: join
+#   import_tasks: join.yml
+#   when: genesis_file is defined or genesis_url is defined
 
 - name: setup systemd services
   import_tasks: services.yml

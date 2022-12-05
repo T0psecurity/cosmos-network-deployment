@@ -1,9 +1,9 @@
 ---
-- name: configure systemd service for gaiad
+- name: configure systemd service for cascadiad
   when: not use_cosmovisor
   template:
-    src: gaiad.service.j2
-    dest: "/etc/systemd/system/{{gaiad_service_name}}.service"
+    src: cascadiad.service.j2
+    dest: "/etc/systemd/system/{{cascadiad_service_name}}.service"
 
 - name: configure systemd service for cosmovisor
   when: use_cosmovisor
@@ -16,24 +16,24 @@
     state: restarted
     name: systemd-journald
 
-- name: Enable gaiad systemd service
+- name: Enable cascadiad systemd service
   when: not use_cosmovisor
   systemd:
     daemon_reload: true
     state: stopped
     enabled: true
-    name: "{{gaiad_service_name}}"
+    name: "{{cascadiad_service_name}}"
 
-- name: Start gaiad systemd service
+- name: Start cascadiad systemd service
   when: (not use_cosmovisor) and (not reboot | default(false) | bool)
   systemd:
     daemon_reload: true
     state: restarted
     enabled: true
-    name: "{{gaiad_service_name}}"
+    name: "{{cascadiad_service_name}}"
   tags:
-    - gaiad_start
-    - gaiad_restart
+    - cascadiad_start
+    - cascadiad_restart
 
 - name: Enable cosmovisor systemd service
   when: use_cosmovisor
@@ -51,5 +51,5 @@
     enabled: true
     name: "{{cosmovisor_service_name}}"
   tags:
-    - gaiad_start
-    - gaiad_restart
+    - cascadiad_start
+    - cascadiad_restart

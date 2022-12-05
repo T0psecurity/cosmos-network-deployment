@@ -4,41 +4,41 @@
 go_arch: "{{binary_arch_map[ansible_architecture]}}"
 go_version: 1.18.5
 
-# General Gaiad settings
-gaiad_user: gaia
-gaiad_user_home: "/home/{{gaiad_user}}"
-gaiad_home: "{{gaiad_user_home}}/.gaia"
-gaiad_home_autoclear: false
-gaiad_unsafe_reset: false
-gaiad_version: v7.0.0
-gaiad_repository: https://github.com/cosmos/gaia.git
-gaiad_binary_release: "https://github.com/cosmos/gaia/releases/download/{{ gaiad_version }}/gaiad-{{ gaiad_version }}-{{binary_arch_map[ansible_architecture]}}"
-gaiad_binary_source: "build"
-gaiad_bin: "{{ gaiad_user_home }}/go/bin/gaiad"
-gaiad_service_name: "gaiad"
-gaiad_gov_testing: false
-gaiad_voting_period: 10s
-gaiad_bond_denom: uatom
+# General Cascadiad settings
+cascadiad_user: cascadia
+cascadiad_user_home: "/home/{{cascadiad_user}}"
+cascadiad_home: "{{cascadiad_user_home}}/.cascadiad"
+cascadiad_home_autoclear: false
+cascadiad_unsafe_reset: false
+cascadiad_version: v0.1.1
+cascadiad_repository: https://github.com/CascadiaFoundation/cascadia-chain.git
+cascadiad_binary_release: "https://github.com/CascadiaFoundation/cascadia-chain/releases/download/{{ cascadiad_version }}/cascadiad-{{ cascadiad_version }}-{{binary_arch_map[ansible_architecture]}}"
+cascadiad_binary_source: "build"
+cascadiad_bin: "{{ cascadiad_user_home }}/go/bin/cascadiad"
+cascadiad_service_name: "cascadiad"
+cascadiad_gov_testing: false
+cascadiad_voting_period: 10s
+cascadiad_bond_denom: uatom
 chain_id: "theta-devnet"
 
 # Default variables for creating a validator
-gaiad_create_validator: false
-gaiad_gentx_validator_stake: "8000000000{{ gaiad_bond_denom }}"
-gaiad_validator_keyring: "test"
-gaiad_validator_coins: "1000000000000{{ gaiad_bond_denom }}"
+cascadiad_create_validator: false
+cascadiad_gentx_validator_stake: "8000000000{{ cascadiad_bond_denom }}"
+cascadiad_validator_keyring: "test"
+cascadiad_validator_coins: "1000000000000{{ cascadiad_bond_denom }}"
 
 # Default variables for airdropping tokens
-gaiad_airdrop: false
-gaiad_airdrop_coins: "1000000000{{ gaiad_bond_denom }}"
-gaiad_airdrop_accounts: []
+cascadiad_airdrop: false
+cascadiad_airdrop_coins: "1000000000{{ cascadiad_bond_denom }}"
+cascadiad_airdrop_accounts: []
 
 # Cosmovisor settings
 ## TODO: Support arbitrary cosmovisor branches
 use_cosmovisor: true
 cosmovisor_version: v1.0.0
 cosmovisor_repository: github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor
-cosmovisor_bin: "{{gaiad_user_home}}/go/bin/cosmovisor"
-cosmovisor_home: "{{ gaiad_home }}/cosmovisor"
+cosmovisor_bin: "{{cascadiad_user_home}}/go/bin/cosmovisor"
+cosmovisor_home: "{{ cascadiad_home }}/cosmovisor"
 cosmovisor_service_name: "cosmovisor"
 cosmovisor_skip_backup: true
 

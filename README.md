@@ -1,10 +1,4 @@
 # Ansible Cosmos Network Creator
-
-[![Lint](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/lint.yml)
-[![Test Gaia Versions](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/test-gaia-versions.yml/badge.svg?branch=main)](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/test-gaia-versions.yml)
-[![Test Gaia Versions with Stateful Genesis](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/test-gaia-stateful-upgrade.yml/badge.svg?branch=main)](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/test-gaia-stateful-upgrade.yml)
-[![Join Public Testnet](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/test-theta-node.yml/badge.svg?branch=main)](https://github.com/hyphacoop/cosmos-ansible/actions/workflows/test-theta-node.yml)
-
 ✨ An Ansible toolkit for Cosmos networks 💫
 
 Use this toolkit to:
@@ -52,31 +46,31 @@ Watch the video below to see the playbook in action:
 
 ### Playbook Tags
 
-Use `gaia_control.py` to run only part of the `gaia` playbook:
+Use `cascadia_control.py` to run only part of the `cascadia` playbook:
 
 ```
-./gaia-control.py [-i inventory] [-t target] operation
+./cascadia-control.py [-i inventory] [-t target] operation
 ```
 
-The inventory argument is optional and defaults to `inventory.yml` (e.g. `./gaia-control.py restart`).
+The inventory argument is optional and defaults to `inventory.yml` (e.g. `./cascadia-control.py restart`).
 
 The target option is the server IP or domain.
 
 The operation will apply to all the nodes in the inventory:
-- `restart` restarts the gaiad/cosmovisor service
-- `stop` stops the gaiad/cosmovisor service
-- `start` starts thegaiad/cosmovisor service
+- `restart` restarts the cascadiad/cosmovisor service
+- `stop` stops the cascadiad/cosmovisor service
+- `start` starts thecascadiad/cosmovisor service
 - `reboot` reboots the machine
-- `reset` runs `gaiad unsafe-reset-all`
+- `reset` runs `cascadiad unsafe-reset-all`
 
 ### Role Folder Structure
 
-- The `gaia` role provides the core functionality of this toolkit
-- Node setup: `roles/gaia/tasks/main.yml`
-- Default variables: `roles/gaia/defaults/main.yml`
-- Systemd services: `roles/gaia/templates/`
-- To add a variable to the gaia config files, add it to:
-  - `roles/gaia/templates/ansible_vars.json.j2`  
+- The `cascadia` role provides the core functionality of this toolkit
+- Node setup: `roles/cascadia/tasks/main.yml`
+- Default variables: `roles/cascadia/defaults/main.yml`
+- Systemd services: `roles/cascadia/templates/`
+- To add a variable to the cascadia config files, add it to:
+  - `roles/cascadia/templates/ansible_vars.json.j2`  
 
 ## 🌴 Automatic Tests
 
@@ -90,7 +84,7 @@ The fresh state test is run using GitHub Actions and results are displayed with 
 
 We export a genesis file from `cosmoshub-4` and modify it using our [tinkerer script](https://github.com/hyphacoop/cosmos-genesis-tinkerer). The exported and modified genesis files can be accessed [here](https://files.polypore.xyz/genesis/).
 
-We run the stateful tests with the modified genesis file when there is a major version of Gaia that is higher than the major version running on `cosmoshub-4`.
+We run the stateful tests with the modified genesis file when there is a major version of Cascadia that is higher than the major version running on `cosmoshub-4`.
 
 ### Joining the Public Testnet (weekly)
 

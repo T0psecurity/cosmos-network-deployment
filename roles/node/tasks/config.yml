@@ -25,8 +25,8 @@
     state: present
     key: "{{ ssh_pub_key.stdout }}"
 
-- name: reset gaiad database (command for <v7.0.1)
-  when: chain_binary_name == "gaiad" and node_unsafe_reset and ((major_version|int == 7 and minor_version|int == 0 and patch_version|int == 0) or major_version|int < 7)
+- name: reset cascadiad database (command for <v7.0.1)
+  when: chain_binary_name == "cascadiad" and node_unsafe_reset and ((major_version|int == 7 and minor_version|int == 0 and patch_version|int == 0) or major_version|int < 7)
   shell: |
     cd $HOME
     {{chain_bin}} unsafe-reset-all --home {{chain_home}}
@@ -34,8 +34,8 @@
   tags:
     - chain_reset
 
-- name: reset gaiad database (command for >v7.0.0)
-  when: chain_binary_name == "gaiad" and node_unsafe_reset and ((major_version|int == 7 and minor_version|int == 0 and patch_version|int >= 1) or (major_version|int == 7 and minor_version|int >= 1) or major_version|int > 7)
+- name: reset cascadiad database (command for >v7.0.0)
+  when: chain_binary_name == "cascadiad" and node_unsafe_reset and ((major_version|int == 7 and minor_version|int == 0 and patch_version|int >= 1) or (major_version|int == 7 and minor_version|int >= 1) or major_version|int > 7)
   shell: |
     cd $HOME
     {{chain_bin}} tendermint unsafe-reset-all --home {{chain_home}}
@@ -117,7 +117,10 @@
   when: chain_create_validator and not chain_recover_validator
   shell: |
     cd $HOME
+    {{chain_bin}} config keyring-backend {{node_keyring}}
+    {{chain_bin}} config chain-id {{chain_id}}
     {{chain_bin}} keys add validator --keyring-backend {{node_keyring}} --home {{chain_home}} --output json
+    {{chain_bin}} init {{validator_moniker}} --chain-id {{chain_id}}
     {{chain_bin}} add-genesis-account validator {{chain_validator_coins}}{{ chain_denom }} --home {{chain_home}} --keyring-backend="{{node_keyring}}"
   register: chain_create_validator_output
   become_user: "{{node_user}}"
@@ -125,7 +128,7 @@
 - name: save validator name, address, and mnemonic
   when: chain_create_validator and not chain_recover_validator
   copy:
-    content="{{chain_create_validator_output.stderr}}"
+    content="{{chain_create_validator_output.stdout}}"
     dest="{{chain_home}}/validator.json"
   become_user: "{{node_user}}"
 
@@ -141,7 +144,7 @@
 - name: save validator name, address, and mnemonic
   when: chain_recover_validator
   copy:
-    content="{{chain_recover_validator_output.stderr}}"
+    content="{{chain_recover_validator_output.stdout}}"
     dest="{{chain_home}}/validator.json"
   become_user: "{{node_user}}"
 
@@ -181,7 +184,10 @@
   shell: |
     cd $HOME
     PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+    {{chain_bin}} config keyring-backend {{node_keyring}}
+    {{chain_bin}} config chain-id {{chain_id}}
     {{chain_bin}} keys add {{ inventory_hostname }} --keyring-backend {{ node_keyring }} --home {{chain_home}} --output json
+    {{chain_bin}} init {{validator_moniker}} --chain-id {{chain_id}}
     {{chain_bin}} add-genesis-account {{ inventory_hostname }} {{ chain_validator_coins }}{{ chain_denom }} --home {{chain_home}} --keyring-backend="{{ node_keyring }}"
   register: node_create_multinode_validator_output
   become_user: "{{ node_user }}"
@@ -191,7 +197,7 @@
 - name: save multi-node validator name, address, and mnemonic
   when: start_multinode
   copy:
-    content="{{node_create_multinode_validator_output.stderr}}"
+    content="{{node_create_multinode_validator_output.stdout}}"
     dest="{{ node_user_home }}/multinode/{{ inventory_hostname }}/validator.json"
   delegate_to: "{{ genesis_node }}"
   become_user: "{{ node_user }}"
@@ -247,6 +253,12 @@
     jq '.app_state.gov.deposit_params.min_deposit[0].amount |= "1"' genesis.json > temp.json
     jq '.app_state.gov.voting_params.voting_period |= "{{ chain_voting_period }}"' temp.json > genesis.json
     rm temp.json
+
+- name: patch genesis file with specified denom (step 0)
+  shell: |
+    cd {{chain_home}}/config
+    jq '.app_state.inflation.params.mint_denom |= "{{ chain_denom }}"'  genesis.json >  temp.json 
+    jq '.app_state.evm.params.evm_denom |= "{{ chain_denom }}"' temp.json > genesis.json
 
 - name: patch genesis file with specified denom
   replace:
@@ -359,7 +371,7 @@
 - name: set dynamic p2p_persistent_peers
   when: dynamic_p2p_persistent_peers
   set_fact:
-    p2p_persistent_peers: "{{ p2p_persistent_peers }}{{ hostvars[item]['dynamic_p2p_id']['stdout'] }}@{{ item }}:{{ hostvars[item]['dynamic_p2p_port'] }},"
+    p2p_persistent_peers: "{{ p2p_persistent_peers }}{{ hostvars[item]['dynamic_p2p_id']['stdout'] }}@{{ hostvars[item]['ansible_host'] }}:{{ hostvars[item]['dynamic_p2p_port'] }},"
   with_items: "{{ groups['node'] }}"
 
 - name: remove ending , from p2p_persistent_peers
@@ -372,6 +384,24 @@
   debug:
     msg: 'p2p_persistent_peers string: {{ p2p_persistent_peers }}'
   become_user: "{{ p2p_persistent_peers }}"
+
+- name: clear p2p_seeds
+  set_fact:
+    p2p_seeds: ""
+
+- name: set p2p_seeds
+  set_fact:
+    p2p_seeds: "{{ p2p_seeds }}{{ hostvars[item]['dynamic_p2p_id']['stdout'] }}@{{ hostvars[item]['ansible_host'] }}:{{ hostvars[item]['dynamic_p2p_port'] }},"
+  with_items: "{{ groups['node'] }}"
+
+- name: remove ending , from p2p_seeds
+  set_fact:
+    p2p_seeds: "{{ p2p_seeds[:-1] }}"
+
+- name: p2p_seeds string
+  debug:
+    msg: 'p2p_seeds string: {{ p2p_seeds }}'
+  become_user: "{{ p2p_seeds }}"
 
 ## Patching Config files
 - name: generate config json for patching toml files
