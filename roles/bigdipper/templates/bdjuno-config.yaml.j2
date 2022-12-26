@@ -1,18 +1,17 @@
 chain:
-    bech32_prefix: cosmos
-    modules: 
+    bech32_prefix: cascadia
+    modules:
+        - actions
         - modules
         - messages
         - auth
         - bank
         - consensus
         - gov
-        - mint
         - slashing
         - staking
         - distribution
-        - actions
-
+        - inflation
 node:
     type: remote
     config:
@@ -48,19 +47,15 @@ logging:
     format: text
 telemetry:
     port: {{bigdipper_telemetry_port}}
-pruning:
-    keep_recent: 100
-    keep_every: 500
-    interval: 10
 pricefeed:
     tokens:
-        - name: Atom
+        - name: Cascadia
           units:
-            - denom: uatom
+            - denom: uCC
               exponent: 0
-            - denom: atom
-              exponent: 6
-              price_id: cosmos
+            - denom: CC
+              exponent: 18
+              price_id: cascadia
         - name: Rho
           units:
             - denom: rho

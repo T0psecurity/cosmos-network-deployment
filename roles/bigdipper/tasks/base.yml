@@ -5,31 +5,31 @@
 
 # Set up nginx
 
-- name: Change vars for TLS
-  when: bigdipper_use_tls_proxy
-  set_fact:
-    bigdipper_web_scheme: https
-    bigdipper_websocket_scheme: wss
-    ssl_provider: "letsencrypt"
+# - name: Change vars for TLS
+#   when: bigdipper_use_tls_proxy
+#   set_fact:
+#     bigdipper_web_scheme: https
+#     bigdipper_websocket_scheme: wss
+#     ssl_provider: "letsencrypt"
 
-- include_role:
-    name: hypha.common.nginx
+# - include_role:
+#     name: hypha.common.nginx
 
-- include_role:
-    name: hypha.common.ssl
+# - include_role:
+#     name: hypha.common.ssl
 
-- name: Restart nginx to apply new config
-  systemd:
-    state: restarted
-    name: nginx
+# - name: Restart nginx to apply new config
+#   systemd:
+#     state: restarted
+#     name: nginx
 
 # Set up big dipper
 - name: "Install python dependencies"
   pip:
     name: psycopg2-binary
 
-- include_role:
-    name: docker
+# - include_role:
+#     name: docker
 
 - name: Remove golang apt package
   ansible.builtin.apt:
@@ -80,13 +80,13 @@
     name: "{{bdjuno_service_name}}"
   when: "'{{bdjuno_service_name}}.service' in services"
 
-- name: "Stop big-dipper-ui systemd service"
-  systemd:
-    state: stopped
-    name: "{{bdui_service_name}}"
-  when: "'{{bdui_service_name}}.service' in services"
+# - name: "Stop big-dipper-ui systemd service"
+#   systemd:
+#     state: stopped
+#     name: "{{bdui_service_name}}"
+#   when: "'{{bdui_service_name}}.service' in services"
 
-- name: Remove hasura docker container
-  community.docker.docker_container:
-    name: big-dipper-hasura
-    state: absent
+# - name: Remove hasura docker container
+#   community.docker.docker_container:
+#     name: big-dipper-hasura
+#     state: absent

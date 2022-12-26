@@ -8,5 +8,5 @@
 - name: Set up Hasura
   import_tasks: hasura.yml
 
-- name: Set up Big Dipper UI
-  import_tasks: bdui.yml
+# - name: Set up Big Dipper UI
+#   import_tasks: bdui.yml

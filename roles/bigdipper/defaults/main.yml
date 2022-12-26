@@ -10,14 +10,14 @@ go_version: 1.18.5
 nodejs_version: "14.x"
 
 ### Big Dipper ###
-bigdipper_user: "bigdipper"
+bigdipper_user: "ubuntu"
 bigdipper_user_home: "/home/{{bigdipper_user}}"
 bigdipper_db: bdjuno
-bigdipper_db_user: "bdjuno"
+bigdipper_db_user: "feynman"
 # This password prevents drive-by malware
 # from guessing or in case it's accidentally exposed.
 # The DB runs on localhost so the password doesn't need to be secret:
-bigdipper_db_password: "fh8XZju6cwDRRryt"
+bigdipper_db_password: "1qazxsw23edc"
 bigdipper_telemetry_port: 5000
 bigdipper_rpc_port: 26657
 
@@ -26,7 +26,7 @@ bdjuno_home: "{{bigdipper_user_home}}/.bdjuno"
 bdjuno_dir: "{{bigdipper_user_home}}/bdjuno"
 bdjuno_bin: "{{bigdipper_user_home}}/go/bin/bdjuno"
 bdjuno_service_name: "bdjuno"
-bdjuno_client_name: gaia
+bdjuno_client_name: cascadia
 bdjuno_rpc_port: 26657
 bdjuno_grpc_port: 9090
 bdjuno_rpc_address: "http://localhost:{{ bdjuno_rpc_port }}"
@@ -41,7 +41,7 @@ bdjuno_avg_block_time: 5s
 # bdjuno_version: "chains/cosmos/testnet"
 # Set to match genesis info:
 # bigdipper_genesis_time: 2021-07-13T08:00:00
-# bigdipper_genesis_height: 1
+bigdipper_genesis_height: 1
 
 bdjuno_hasura_actions_port: 3000
 
@@ -51,7 +51,7 @@ hasura_cli_version: "2.9.0"
 hasura_port: 8080
 hasura_actions_service_name: hasura-actions
 # The following should be private:
-# hasura_admin_secret: "something"
+hasura_admin_secret: "something"
 hasura_host: "hasura."
 rpc_host: "rpc."
 
@@ -100,3 +100,6 @@ nginx_sites:
       "/":
         proxy_location: "http://127.0.0.1:{{bdui_port}}"
         proxy_websocket: true
+
+## genesis url
+genesis_url: "https://github.com/CascadiaFoundation/chain-configuration/raw/master/devnet/genesis.json.gz"

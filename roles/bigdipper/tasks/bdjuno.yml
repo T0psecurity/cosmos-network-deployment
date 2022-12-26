@@ -5,7 +5,9 @@
   git:
     repo: 'https://github.com/forbole/bdjuno.git'
     dest: "{{bdjuno_dir}}"
-    version: "{{bdjuno_version}}"
+    version: chains/evmos/mainnet
+    update: yes
+    force: yes
 
 - name: "Install postgres"
   apt:

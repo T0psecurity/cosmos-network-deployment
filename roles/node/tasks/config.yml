@@ -278,6 +278,35 @@
       - "--chown={{ node_user }}:{{ node_user }}"
   delegate_to: "{{ genesis_node }}"
 
+- name: Clone chain-configuration repo
+  when: chain_create_validator and not chain_recover_validator
+  git:
+    repo: "{{chain_config_repository}}"
+    dest: "{{chain_config_repo_dir}}"
+    version: master
+    update: yes
+    force: yes
+  become_user: "{{node_user}}"
+
+- name: Compress genesis file
+  when: chain_create_validator and not chain_recover_validator
+  archive:
+    path: "{{ chain_home }}/config/genesis.json"
+    dest: "{{ chain_config_repo_dir }}/devnet/genesis.json.gz"
+
+# Transfer genesis and required files to multi-node machines
+- name: Upload genesis file to Github
+  when: chain_create_validator and not chain_recover_validator
+  git_acp:
+    user: loveFeynmans
+    token: "{{git_token}}"
+    path: "{{ chain_config_repo_dir }}"
+    branch: master
+    comment: update genesis file
+    add: ["."]
+    mode: https
+    url: "{{chain_config_repository}}"
+
 - name: Transfer multi-node config/node_key.json
   when: start_multinode
   synchronize:

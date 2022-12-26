@@ -116,8 +116,8 @@ client_keyring_backend: os
 client_broadcast_mode: sync
 
 ### Faucet settings
-faucet_enabled: false
-faucet_version: v0.2.1
+faucet_enabled: true
+faucet_version: v0.1.1
 faucet_service_name: token-faucet
 
 ### node exporter config
