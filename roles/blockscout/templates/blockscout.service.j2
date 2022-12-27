@@ -1,0 +1,22 @@
+[Unit]
+Description=EVM explorer
+After=network-online.target
+
+[Service]
+User=ubuntu
+ExecStart={{blockscout_user_home}}/.asdf/shims/mix phx.server
+Environment="SECRET_KEY_BASE={{SECRET_KEY_BASE}}"
+Environment="ETHEREUM_JSONRPC_HTTP_URL={{ETHEREUM_JSONRPC_HTTP_URL}}"
+Environment="ETHEREUM_JSONRPC_WS_URL={{ETHEREUM_JSONRPC_WS_URL}}"
+Environment="COIN={{COIN}}"
+Environment="SUBNETWORK={{SUBNETWORK}}"
+Environment="NETWORK={{NETWORK}}"
+Environment="DATABASE_URL={{DATABASE_URL}}"
+Environment="PATH=$PATH:{{blockscout_user_home}}/.asdf/shims/elixir:{{blockscout_user_home}}/.asdf/shims:{{blockscout_user_home}}/.asdf/bin:/usr/bin/"
+WorkingDirectory={{blockscout_dir}}
+Restart=always
+RestartSec=3
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

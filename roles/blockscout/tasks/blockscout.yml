@@ -1,0 +1,136 @@
+- name: Clone BlockScout
+  become_user: "{{ blockscout_user }}"
+  git:
+    repo: "{{ blockscout_repo }}"
+    dest: "{{ blockscout_dir }}"
+    version: "{{ branch }}"
+    update: yes
+    force: yes
+
+- name: Ensure user exists for bigdipper
+  user:
+    name: "{{blockscout_user}}"
+    append: true
+    groups: adm
+    shell: /bin/bash
+    comment: User for blockscout block explorer services
+
+- name: Get the list of services
+  service_facts:
+
+- name: "Stop blockscout systemd service"
+  systemd:
+    state: stopped
+    name: "{{blockscout_service_name}}"
+  when: "'{{blockscout_service_name}}.service' in services"
+
+- name: Remove static assets from previous deployment, if any
+  file:
+    path: "{{ blockscout_repo }}/apps/block_scout_web/priv/static"
+    state: absent 
+
+- block:
+  - name: sh env
+    ansible.builtin.shell:
+    args:
+      cmd: "{{ shenv_cmd }}"
+      chdir: '{{ blockscout_user_home }}/'
+    register: shenv
+
+  - name: Compile BlockScout
+    ansible.builtin.shell: |
+      {{ source }}
+      {{blockscout_user_home}}/.asdf/shims/mix do {{ item }}
+    args:
+      chdir: "{{ blockscout_dir }}"
+      executable: '{{ ansible_user_shell }}'
+    with_items:
+      - deps.get
+      - local.rebar --force
+      - deps.compile
+      - compile
+      - ecto.drop
+      - ecto.create
+      - ecto.migrate
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+
+  - name: Install Node modules at apps/block_scout_web/assets
+    command: npm install 
+    args:
+      chdir: "{{ blockscout_dir }}/apps/block_scout_web/assets" 
+    
+  - name: Execute webpack.js at apps/block_scout_web/assets/node_modules/webpack/bin 
+    command: node_modules/webpack/bin/webpack.js --mode production
+    args:
+      chdir: "{{ blockscout_dir }}/apps/block_scout_web/assets"
+
+  - name: Install Node modules at apps/explorer
+    command: npm install
+    args:
+      chdir: "{{ blockscout_dir }}/apps/explorer" 
+
+  - name: Build static assets
+    ansible.builtin.shell: |
+      {{ source }}
+      {{ blockscout_user_home }}/.asdf/shims/mix phx.digest
+    args:
+      chdir: "{{ blockscout_dir }}"
+      executable: '{{ ansible_user_shell }}'
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+
+  # - name: Install SSL certificates
+  #   ansible.builtin.shell: |
+  #     {{ source }}
+  #     {{ blockscout_user_home }}/.asdf/shims/mix phx.gen.cert blockscout blockscout.local --force
+  #   args:
+  #     chdir: "{{ blockscout_dir }}/apps/block_scout_web"
+  #     executable: '{{ ansible_user_shell }}'
+  #   vars: 
+  #     source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+
+  environment:
+    NETWORK: "{{ NETWORK }}"
+    SUBNETWORK: "{{ SUBNETWORK }}"
+    ETHEREUM_JSONRPC_HTTP_URL: "{{ ETHEREUM_JSONRPC_HTTP_URL }}" # Network RPC endpoint
+    ETHEREUM_JSONRPC_WS_URL: "{{ ETHEREUM_JSONRPC_WS_URL }}" # Network RPC endpoint in websocket mode
+    DATABASE_URL: "{{ DATABASE_URL }}"
+    COIN: "{{ COIN }}"
+    SECRET_KEY_BASE: "{{ SECRET_KEY_BASE }}"
+    MIX_ENV: "prod"
+  become_user: "{{ blockscout_user }}"
+  vars:
+    - asdfsh: "{{ blockscout_user_home | quote }}/.asdf/asdf.sh"
+    - profile: "{{ blockscout_user_home }}/.profile"
+    - shprofile: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename | regex_replace('$', '_') | regex_replace('zsh_', 'z') }}profile"
+    - shrc: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename }}rc"
+    - shenv_cmd: "if [ -e {{ asdfsh }} ]; then echo '{{ asdfsh }}'; fi; if [ -e {{ shprofile }} ]; then echo '{{ shprofile }}'; fi; if [ -e {{ profile }} ]; then echo '{{ profile }}'; fi; if [ -e {{ shrc }} ]; then echo '{{ shrc }}'; fi"
+
+# - name: Remove dev dependencies
+#   file:
+#     state: absent
+#     path: "{{ item }}"
+#   with_items:
+#     - "{{ blockscout_dir }}/_build/"
+#     - "{{ blockscout_dir }}/deps/"
+#     - "{{ blockscout_dir }}/apps/block_scout_web/assets/node_modules/"
+#     - "{{ blockscout_dir }}/apps/explorer/node_modules/"
+#     - "{{ blockscout_dir }}/logs/dev/"
+
+- name: "Set up blockscout systemd service"
+  template:
+    src: blockscout.service.j2
+    dest: "/etc/systemd/system/{{blockscout_service_name}}.service"
+
+- name: "Restart journalctl: the logs must flow"
+  systemd:
+    state: restarted
+    name: systemd-journald
+
+- name: "Run blockscout systemd service"
+  systemd:
+    daemon_reload: true
+    state: restarted
+    enabled: true
+    name: "{{blockscout_service_name}}"

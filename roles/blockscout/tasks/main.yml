@@ -1,0 +1,6 @@
+---
+- name: config
+  import_tasks: config.yml
+
+- name: Set up blockscout
+  import_tasks: blockscout.yml

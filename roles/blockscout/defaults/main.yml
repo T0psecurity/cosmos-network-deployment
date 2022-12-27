@@ -1,0 +1,27 @@
+# BlockScout related variables
+
+## An address of BlockScout repo to download
+blockscout_repo: https://github.com/CascadiaFoundation/evm_explorer.git
+branch: dev
+blockscout_user: ubuntu
+blockscout_user_home: "/home/{{blockscout_user}}"
+blockscout_dir: "{{blockscout_user_home}}/blockscout"
+blockscout_service_name: blockscout
+
+# Database
+blockscout_db: blockscout
+blockscout_db_password: cascadia
+blockscout_db_user: "feynman"
+
+erlang: 24.3.4.1
+elixir: 1.13.4-otp-24
+
+NETWORK: Cascadia # Name of the organization/community that hosts the chain
+SUBNETWORK: Testnet # Actual name of the particular network
+ETHEREUM_JSONRPC_HTTP_URL: "http://localhost:8545" # Network RPC endpoint
+ETHEREUM_JSONRPC_WS_URL: "ws://localhost:8546" # Network RPC endpoint in websocket mode
+DATABASE_URL: postgresql://{{blockscout_db_user}}:{{blockscout_db_password}}@localhost:5432/{{blockscout_db}}
+COIN: CC
+SECRET_KEY_BASE: /irrVYsohe37ixGcTvx7Hd0k3afsaEX+L8nl+7G78vQjAiJNXslG0JgdNYvz/VXh
+  
+

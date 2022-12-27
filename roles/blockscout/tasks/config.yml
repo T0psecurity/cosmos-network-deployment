@@ -1,0 +1,231 @@
+- name: "Install postgres"
+  apt:
+    state: present
+    pkg:
+      - postgresql
+      - postgresql-contrib
+
+- name: Remove old database
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{blockscout_db}}"
+    state: absent
+
+- name: Create postgres database
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{blockscout_db}}"
+
+- name: Configure users on postgres
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    db: "{{blockscout_db}}"
+    name: "{{blockscout_db_user}}"
+    password: "{{blockscout_db_password}}"
+
+- name: Grant user access to database
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: "{{blockscout_db}}"
+    privs: ALL
+    type: database
+    obj: "{{blockscout_db}}"
+    role: "{{blockscout_db_user}}"
+
+- name: "Set up node+npm"
+  include_role:
+    name: geerlingguy.nodejs
+
+- name: check if cargo is installed
+  become_user: "{{ blockscout_user }}"
+  shell: "{{ blockscout_user_home}}/.cargo/bin/cargo version"
+  register: cargo_exists
+  ignore_errors: true
+
+- name: Download Installer
+  when: cargo_exists is failed
+  become_user: "{{blockscout_user}}"
+  get_url:
+    url: https://sh.rustup.rs
+    dest: /tmp/sh.rustup.rs
+    mode: '0755'
+    force: 'yes'
+
+- name: install rust/cargo
+  when: cargo_exists is failed
+  become_user: "{{blockscout_user}}"
+  shell: /tmp/sh.rustup.rs -y
+
+- block:
+  - name: Install dependencies of asdf
+    become: true
+    apt:
+      update_cache: yes
+      cache_valid_time: 86400 # 1day
+      name:
+        - curl
+        - git
+      state: latest
+  - name: Install asdf
+    git:
+      repo: https://github.com/asdf-vm/asdf.git
+      dest: "{{ blockscout_user_home }}/.asdf"
+      depth: 1
+      version: master
+    register: result
+  - name: asdf update
+    shell: "bash -lc 'cd {{ blockscout_user_home }}/.asdf && git pull'"
+    ignore_errors: yes
+    when: result is failed
+  - name: set env vars
+    lineinfile:
+      dest: "{{ shrc }}"
+      state: present
+      line: "{{ item.line }}"
+    with_items:
+    - line: ". {{ blockscout_user_home }}/.asdf/completions/asdf.{{ sh }}"
+      regexp: '^ \. \{{ blockscout_user_home }}/\.asdf/completions/asdf\.{{ sh }}'
+    - line: '. {{ blockscout_user_home }}/.asdf/asdf.sh'
+      regexp: '^ \. \{{ blockscout_user_home }}/\.asdf/asdf\.sh'
+  when: ansible_system == 'Linux' and (ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian')
+  become_user: "{{blockscout_user}}"
+  vars:
+    - shrc: "{{ blockscout_user_home | quote }}/.{{ ansible_user_shell | basename | quote }}rc"
+    - sh: "{{ ansible_user_shell | basename | quote }}"
+
+- name: install prerequisite libraries for erlang
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400 # 1day
+    state: latest
+    name:
+    - build-essential
+    - autoconf
+    - m4
+    - libncurses5-dev
+    - libwxgtk3.0-gtk3-dev
+    - libgl1-mesa-dev
+    - libglu1-mesa-dev
+    - libpng-dev
+    - libssh-dev
+    - unixodbc-dev
+    - xsltproc
+    - fop
+    - libxml2-utils
+    - libncurses-dev
+    - openjdk-11-jdk
+
+- block:
+  - name: Install erlang plugin
+    ansible.builtin.shell:
+    args:
+      cmd: "{{ shenv_cmd }}"
+      chdir: '{{ blockscout_user_home }}/'
+    register: shenv
+  - name: asdf plugin add erlang
+    ansible.builtin.shell: |
+      {{ source }} 
+      asdf plugin add erlang
+    args:
+      executable: '{{ ansible_user_shell }}'
+    register: result
+    failed_when: result.rc != 0 and result.stderr | regex_search('(Plugin named .* already added)') == '' 
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+  become_user: "{{blockscout_user}}"
+  vars:
+    - asdfsh: "{{ blockscout_user_home | quote }}/.asdf/asdf.sh"
+    - profile: "{{ blockscout_user_home | quote }}/.profile"
+    - shprofile: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename | regex_replace('$', '_') | regex_replace('zsh_', 'z') }}profile"
+    - shrc: "{{ blockscout_user_home | quote }}/.{{ ansible_user_shell | basename  | quote }}rc"
+    - shenv_cmd: "if [ -e {{ asdfsh }} ]; then echo '{{ asdfsh }}'; fi; if [ -e {{ shprofile }} ]; then echo '{{ shprofile }}'; fi; if [ -e {{ profile }} ]; then echo '{{ profile }}'; fi; if [ -e {{ shrc }} ]; then echo '{{ shrc }}'; fi"
+
+- block:
+  - name: Install Elixir plugin
+    ansible.builtin.shell:
+    args:
+      cmd: "{{ shenv_cmd }}"
+      chdir: '{{ blockscout_user_home }}/'
+    register: shenv
+  - name: asdf plugin add elixir
+    ansible.builtin.shell: |
+      {{ source }} 
+      asdf plugin add elixir
+    args:
+      executable: '{{ ansible_user_shell }}'
+    register: result
+    failed_when: result.rc != 0 and result.stderr | regex_search('(Plugin named .* already added)') == '' 
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+  become_user: "{{blockscout_user}}"
+  vars:
+    - asdfsh: "{{ blockscout_user_home | quote }}/.asdf/asdf.sh"
+    - profile: "{{ blockscout_user_home }}/.profile"
+    - shprofile: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename | regex_replace('$', '_') | regex_replace('zsh_', 'z') }}profile"
+    - shrc: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename }}rc"
+    - shenv_cmd: "if [ -e {{ asdfsh }} ]; then echo '{{ asdfsh }}'; fi; if [ -e {{ shprofile }} ]; then echo '{{ shprofile }}'; fi; if [ -e {{ profile }} ]; then echo '{{ profile }}'; fi; if [ -e {{ shrc }} ]; then echo '{{ shrc }}'; fi"
+
+- block:
+  - name: Install erlang
+    ansible.builtin.shell:
+    args:
+      cmd: "{{ shenv_cmd }}"
+      chdir: '{{ blockscout_user_home }}/'
+    register: shenv
+  - name: asdf install erlang (for Linux)
+    ansible.builtin.shell: |
+      {{ source }} 
+      asdf install erlang {{ erlang | quote }}
+    args:
+      executable: '{{ ansible_user_shell }}'
+    register: result
+    when: ansible_system == 'Linux'
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+  become_user: "{{blockscout_user}}"
+  vars:
+  - asdfsh: "{{ blockscout_user_home | quote }}/.asdf/asdf.sh"
+  - profile: "{{ blockscout_user_home }}/.profile"
+  - shprofile: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename | regex_replace('$', '_') | regex_replace('zsh_', 'z') }}profile"
+  - shrc: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename }}rc"
+  - shenv_cmd: "if [ -e {{ asdfsh }} ]; then echo '{{ asdfsh }}'; fi; if [ -e {{ shprofile }} ]; then echo '{{ shprofile }}'; fi; if [ -e {{ profile }} ]; then echo '{{ profile }}'; fi; if [ -e {{ shrc }} ]; then echo '{{ shrc }}'; fi"
+  - install_erlang_ssl_1_1: "KERL_CONFIGURE_OPTIONS=\"--with-ssl=$(brew --prefix openssl@1.1) --with-odbc=$(brew --prefix unixodbc)\" CC=\"/usr/bin/gcc -I$(brew --prefix unixodbc)/include\" LDFLAGS=-L$(brew --prefix unixodbc)/lib asdf install erlang {{ erlang | quote }}"
+  - install_erlang_ssl_3: "KERL_CONFIGURE_OPTIONS=\"--with-ssl=$(brew --prefix openssl@3) --with-odbc=$(brew --prefix unixodbc)\" CC=\"/usr/bin/gcc -I$(brew --prefix unixodbc)/include\" LDFLAGS=-L$(brew --prefix unixodbc)/lib asdf install erlang {{ erlang | quote }}"
+
+- block:
+  - name: sh env
+    ansible.builtin.shell:
+    args:
+      cmd: "{{ shenv_cmd }}"
+      chdir: '{{ blockscout_user_home }}/'
+    register: shenv
+  - name: asdf install elixir
+    ansible.builtin.shell: |
+      {{ source }}
+      asdf install elixir {{ elixir | quote }}
+    args:
+      executable: '{{ ansible_user_shell }}'
+    register: result
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+  - name: show result
+    debug:
+      var: result
+  - name: asdf install elixir
+    ansible.builtin.shell: |
+      {{ source }}
+      asdf global elixir {{ elixir | quote }}
+    args:
+      executable: '{{ ansible_user_shell }}'
+    vars: 
+      source: "{{ shenv.stdout_lines | map('regex_replace', '(^)', '. ') | join('\n') }}"
+  become_user: "{{blockscout_user}}"
+  vars:
+    - asdfsh: "{{ blockscout_user_home | quote }}/.asdf/asdf.sh"
+    - profile: "{{ blockscout_user_home }}/.profile"
+    - shprofile: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename | regex_replace('$', '_') | regex_replace('zsh_', 'z') }}profile"
+    - shrc: "{{ blockscout_user_home }}/.{{ ansible_user_shell | basename }}rc"
+    - shenv_cmd: "if [ -e {{ asdfsh }} ]; then echo '{{ asdfsh }}'; fi; if [ -e {{ shprofile }} ]; then echo '{{ shprofile }}'; fi; if [ -e {{ profile }} ]; then echo '{{ profile }}'; fi; if [ -e {{ shrc }} ]; then echo '{{ shrc }}'; fi"
+
+
+
