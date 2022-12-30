@@ -16,6 +16,21 @@
       - postgresql
       - postgresql-contrib
 
+- name: Configure PostgreSQL. Set listen_addresses.
+  lineinfile: dest=/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+    regexp="listen_addresses =" line="listen_addresses = '*'" state=present
+
+- name: Configure pg_hba.conf
+  lineinfile: dest=/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+    line="host {{ bigdipper_db }} {{ bigdipper_db_user }} {{ hasura_cloud_id }}/32 md5"
+
+- name: restart postgresql services
+  systemd:
+    daemon_reload: true
+    state: restarted
+    enabled: true
+    name: postgresql.service
+
 - name: Remove old database
   become_user: postgres
   community.postgresql.postgresql_db:

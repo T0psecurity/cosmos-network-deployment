@@ -9,6 +9,9 @@ go_version: 1.18.5
 ### Node.js ###
 nodejs_version: "14.x"
 
+### PostgreSQL ###
+postgresql_version: 12
+
 ### Big Dipper ###
 bigdipper_user: "ubuntu"
 bigdipper_user_home: "/home/{{bigdipper_user}}"
@@ -54,6 +57,7 @@ hasura_actions_service_name: hasura-actions
 hasura_admin_secret: "something"
 hasura_host: "hasura."
 rpc_host: "rpc."
+hasura_cloud_id: "54.176.149.52"
 
 ### Big Dipper UI ###
 bdui_host: ""
