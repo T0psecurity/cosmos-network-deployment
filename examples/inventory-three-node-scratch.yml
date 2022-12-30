@@ -12,28 +12,43 @@ all:
     chain_p2p_host: "p2p"
     chain_grpc_host: "grpc"
     swap_size: 8192
-    genesis_node: validator0
+    genesis_node: validator1
+    validators: [validator1, validator2]
+    sentries: [sentry1, sentry2]
     dynamic_p2p_persistent_peers: true
     bonded_tokens_pool: 100000000000000000000000000
     bonded_supply_divider: 2
+    git_token: "" 
   children:
     node:
       hosts:
-        validator0:
+        validator1:
           chain_create_validator: true
           validator_moniker: validator-40
           voting_power: 40
           chain_gentx_validator: "{{ (bonded_tokens_pool|int * voting_power|int / 100)|int }}"
           chain_validator_coins: "{{ (bonded_supply_divider * chain_gentx_validator|int | int +chain_gentx_validator|int)|int }}"
-        validator1:
+          p2p_pex: false
+          p2p_addr_book_strict: false
+        validator2:
           validator_moniker: validator-32
           start_multinode: true
           voting_power: 60
           chain_gentx_validator: "{{ (bonded_tokens_pool|int * voting_power|int / 100)|int }}"
           chain_validator_coins: "{{ (bonded_supply_divider * chain_gentx_validator|int | int +chain_gentx_validator|int)|int }}"
+          p2p_pex: false
+          p2p_addr_book_strict: false
         # validator2:
         #   validator_moniker: validator-28
         #   start_multinode: true
         #   voting_power: 28
         #   chain_gentx_validator: "{{ (bonded_tokens_pool|int * voting_power|int / 100)|int }}"
         #   chain_validator_coins: "{{ (bonded_supply_divider * chain_gentx_validator|int | int +chain_gentx_validator|int)|int }}"
+        sentry1:
+          api_enabled: true
+          api_enabled_unsafe_cors: true
+          sync_multinode_genesis: true
+        sentry2:
+          api_enabled: true
+          api_enabled_unsafe_cors: true
+          sync_multinode_genesis: true

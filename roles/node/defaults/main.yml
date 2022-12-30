@@ -9,6 +9,7 @@ node_unsafe_reset: false
 chain_version: v0.1.1
 chain_registry: https://raw.githubusercontent.com/CascadiaFoundation/cascadia-chain/master/chain.json
 chain_repository: https://github.com/CascadiaFoundation/cascadia-chain.git
+chain_config_repository: https://github.com/CascadiaFoundation/chain-configuration.git
 chain_binary_release: "https://github.com/CascadiaFoundation/cascadia-chain/releases/download/{{ chain_version }}/cascadiad-{{ chain_version }}-{{binary_arch_map[ansible_architecture]}}"
 chain_binary_source: "build"
 chain_bin: "{{ node_user_home }}/go/bin/{{chain_binary_name}}"
@@ -18,6 +19,7 @@ chain_voting_period: 10s
 chain_denom: uCC
 chain_id: "cosmos-testnet"
 chain_repo_dir: "{{ node_user_home }}/cascadia-chain"
+chain_config_repo_dir: "{{ node_user_home }}/chain-configuration"
 chain_moniker: "{{inventory_hostname}}"
 chain_start: true
 chain_recover_delegator: false
@@ -55,7 +57,7 @@ go_version: 1.18.5
 # app.toml
 ## app.toml: Base Configuration
 minimum_gas_prices: '0{{ chain_denom }}'
-pruning: default
+pruning: nothing
 pruning_keep_recent: '0'
 pruning_keep_every: '0'
 pruning_interval: '0'
@@ -168,7 +170,8 @@ client_rpc_interface: "tcp://localhost:{{ rpc_port }}"
 client_broadcast_mode: sync
 
 # Faucet settings
-faucet_enabled: false
+faucet_enabled: true
+faucet_mnemonic: ""
 
 # Node Exporter config
 node_exporter_port: 9100
